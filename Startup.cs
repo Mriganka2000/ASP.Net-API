@@ -11,14 +11,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using My_Book_API.Data;
+using Microsoft.EntityFrameworkCore;
+using My_Book_API.Data.Services;
 
 namespace My_Book_API
 {
     public class Startup
     {
+        public string ConnectionString { get; set; }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            ConnectionString = Configuration.GetConnectionString("DefaultConnectionString");
         }
 
         public IConfiguration Configuration { get; }
@@ -28,9 +33,16 @@ namespace My_Book_API
         {
 
             services.AddControllers();
+            
+            // Configure DbContext with SQL
+            services.AddDbContext<AppDbContext>(options => options.UseSqlServer(ConnectionString));
+            
+            // Configure the Sevices
+            services.AddTransient<BooksService>();
+            
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "My_Book_API", Version = "v1" });
+                c.SwaggerDoc("v2", new OpenApiInfo { Title = "My_Book_API_Updated", Version = "v2" });
             });
         }
 
@@ -41,7 +53,7 @@ namespace My_Book_API
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "My_Book_API v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v2/swagger.json", "My_Book_API_Updated v1"));
             }
 
             app.UseHttpsRedirection();
@@ -54,6 +66,8 @@ namespace My_Book_API
             {
                 endpoints.MapControllers();
             });
+            
+            AppDbInitializer.Seed(app);
         }
     }
 }
